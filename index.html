@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Login</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <br />
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          required
+        /><br /><br />
+        <button type="submit">Login</button>
+      </form>
+      <br />
+      <button onclick="googleLogin()">Login with Google</button>
+      <br />
+      <p>Don't have an account?</p>
+      <button onclick="goToRegister()">Register</button>
+      <p id="message"></p>
+    </div>
+    <script src="js/login.js"></script>
+  </body>
+</html>

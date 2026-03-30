@@ -1,0 +1,24 @@
+{
+  "name": "quantitymeasurementapp-frontend",
+  "version": "1.0.0",
+  "description": "��#\u0000 \u0000Q\u0000u\u0000a\u0000n\u0000t\u0000i\u0000t\u0000y\u0000M\u0000e\u0000a\u0000s\u0000u\u0000r\u0000m\u0000e\u0000n\u0000t\u0000A\u0000p\u0000p\u0000-\u0000F\u0000r\u0000o\u0000n\u0000t\u0000e\u0000n\u0000d\u0000\r\u0000 \u0000",
+  "main": "index.js",
+  "scripts": {
+    "start": "json-server --watch db.json --port 3000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/goVInDanay/QuantityMeasurmentApp-Frontend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/goVInDanay/QuantityMeasurmentApp-Frontend/issues"
+  },
+  "homepage": "https://github.com/goVInDanay/QuantityMeasurmentApp-Frontend#readme",
+  "dependencies": {
+    "json-server": "^1.0.0-beta.15"
+  }
+}
