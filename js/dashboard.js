@@ -1,8 +1,8 @@
 const API_BASE = "http://localhost:8080/api";
 
-// =======================
-// 👤 USER
-// =======================
+const ARITHMETIC_BLOCKED_TYPES = ["TemperatureUnit"];
+
+let isLoggedIn = false;
 
 async function loadUser() {
   try {
@@ -12,31 +12,34 @@ async function loadUser() {
     });
 
     if (!res.ok) {
-      // ❌ DON'T redirect
-      document.getElementById("user").innerHTML = `
-        <p>Guest User</p>
-        <a href="index.html">Login to view history</a>
-      `;
-      return false;
+      document.getElementById("profileName").innerText = "Guest";
+      document.getElementById("profileEmail").innerText = "-";
+      document.getElementById("userName").innerText = "Guest";
+      document.getElementById("avatarInitial").innerText = "G";
+      return;
     }
+
+    isLoggedIn = true;
 
     const user = await res.json();
 
-    document.getElementById("user").innerHTML = `
-      <p>Name: ${user.name}</p>
-      <p>Email: ${user.email}</p>
-    `;
+    document.getElementById("profileName").innerText = user.name || "-";
+    document.getElementById("profileEmail").innerText = user.email || "-";
+    document.getElementById("userName").innerText = user.name || user.email;
 
-    return true; // ✅ logged in
+    const initials = (user.name || user.email || "?")
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+    document.getElementById("avatarInitial").innerText = initials;
   } catch (err) {
+    isLoggedIn = false;
     console.error(err);
-    return false;
   }
 }
-
-// =======================
-// 🚪 LOGOUT
-// =======================
 
 async function logout() {
   await fetch(`${API_BASE}/auth/logout`, {
@@ -47,20 +50,50 @@ async function logout() {
   window.location.href = "index.html";
 }
 
-// =======================
-// 🔥 UNIT MAP (KEY FIX)
-// =======================
-
 const unitMap = {
   LengthUnit: ["FEET", "INCHES", "YARDS", "CENTIMETERS"],
   VolumeUnit: ["LITRE", "MILLILITRE", "GALLON"],
-  WeightUnit: ["GRAM", "KILOGRAM", "MILLIGRAM", "POUND", "TONNE"],
-  TemperatureUnit: ["CELSIUS", "FAHRENHEIT"],
+  WeightUnit: ["GRAM", "KILOGRAM", "POUND"],
+  TemperatureUnit: ["CELSIUS", "FAHRENHEIT", "KELVIN"],
 };
 
-// =======================
-// 🎯 POPULATE UNITS
-// =======================
+function handleAuth() {
+  if (isLoggedIn) {
+    logout();
+  } else {
+    window.location.href = "index.html";
+  }
+}
+
+function selectType(value) {
+  document
+    .querySelectorAll(".type-btn")
+    .forEach((b) => b.classList.toggle("active", b.dataset.value == value));
+
+  document.getElementById("measurementType").value = value;
+  populateUnits(value);
+  updateArithmeticButtons(value);
+}
+
+function updateArithmeticButtons(type) {
+  const isBlocked = ARITHMETIC_BLOCKED_TYPES.includes(type);
+
+  const arithmeticBtns = [
+    { selector: ".btn-add", label: "Add" },
+    { selector: ".btn-subtract", label: "Subtract" },
+    { selector: ".btn-divide", label: "Divide" },
+  ];
+
+  arithmeticBtns.forEach(({ selector, label }) => {
+    const btn = document.querySelector(selector);
+    if (!btn) return;
+    btn.disabled = isBlocked;
+    btn.title = isBlocked ? `${label} is not supported for Temperature` : "";
+  });
+
+  const banner = document.getElementById("tempWarningBanner");
+  if (banner) banner.style.display = isBlocked ? "flex" : "none";
+}
 
 function populateUnits(type) {
   const unit1 = document.getElementById("unit1");
@@ -71,27 +104,25 @@ function populateUnits(type) {
 
   if (!type || !unitMap[type]) return;
 
-  unitMap[type].forEach((unit) => {
-    const opt1 = document.createElement("option");
-    const opt2 = document.createElement("option");
+  unitMap[type].forEach((unit, i) => {
+    unit1.appendChild(
+      Object.assign(document.createElement("option"), {
+        value: unit,
+        text: unit,
+      }),
+    );
 
-    opt1.value = unit;
-    opt1.text = unit;
+    const o2 = Object.assign(document.createElement("option"), {
+      value: unit,
+      text: unit,
+    });
 
-    opt2.value = unit;
-    opt2.text = unit;
-
-    unit1.appendChild(opt1);
-    unit2.appendChild(opt2);
+    if (i === 1) o2.selected = true;
+    unit2.appendChild(o2);
   });
 
-  // Trigger convert after loading
   convert();
 }
-
-// =======================
-// 🔥 VALIDATION
-// =======================
 
 function validateInput(value, unit) {
   if (value === "" || isNaN(value)) return "Enter valid number";
@@ -99,85 +130,37 @@ function validateInput(value, unit) {
   return null;
 }
 
-// =======================
-// ➕ ADD
-// =======================
+function showResult(text, type = "default") {
+  const banner = document.getElementById("resultBanner");
+  const e1 = document.getElementById("result");
 
-async function add() {
-  const v1 = parseFloat(document.getElementById("value1").value);
-  const v2 = parseFloat(document.getElementById("value2").value);
-  const unit1 = document.getElementById("unit1").value;
-  const unit2 = document.getElementById("unit2").value;
-  const type = document.getElementById("measurementType").value;
+  banner.className = "result-banner";
+  e1.className = "";
 
-  const body = {
-    thisQuantity: {
-      value: v1,
-      unit: unit1,
-      measurementType: type,
-    },
-    thatQuantity: {
-      value: v2,
-      unit: unit2,
-      measurementType: type,
-    },
-  };
+  if (type === "success") {
+    banner.classList.add("has-result");
+    e1.className = "success";
+  } else if (type === "error") {
+    banner.classList.add("error-result");
+    e1.className = "error";
+  }
 
-  const res = await fetch(`${API_BASE}/quantity/add`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  const data = await res.json();
-
-  document.getElementById("result").innerText =
-    `Result: ${data.value} ${data.unit}`;
-
-  loadHistory();
+  e1.innerText = text;
 }
 
-// =======================
-// ➖ SUBTRACT
-// =======================
-
-async function subtract() {
-  const v1 = parseFloat(document.getElementById("value1").value);
-  const v2 = parseFloat(document.getElementById("value2").value);
-  const unit1 = document.getElementById("unit1").value;
-  const unit2 = document.getElementById("unit2").value;
-  const type = document.getElementById("measurementType").value;
-
-  const res = await fetch(`${API_BASE}/quantity/subtract`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      thisQuantity: {
-        value: v1,
-        unit: unit1,
-        measurementType: type,
-      },
-      thatQuantity: {
-        value: v2,
-        unit: unit2,
-        measurementType: type,
-      },
-    }),
-  });
-
-  const data = await res.json();
-
-  document.getElementById("result").innerText =
-    `Result: ${data.value} ${data.unit}`;
-
-  loadHistory();
+function swapUnits() {
+  const unit1 = document.getElementById("unit1");
+  const unit2 = document.getElementById("unit2");
+  const value1 = document.getElementById("value1");
+  const value2 = document.getElementById("value2");
+  const tempUnit = unit1.value;
+  unit1.value = unit2.value;
+  unit2.value = tempUnit;
+  const tempValue = value1.value;
+  value1.value = value2.value;
+  value2.value = tempValue;
+  convert();
 }
-
-// =======================
-// 🔁 CONVERT (FINAL FIX)
-// =======================
 
 async function convert() {
   const value = parseFloat(document.getElementById("value1").value);
@@ -189,7 +172,7 @@ async function convert() {
 
   const error = validateInput(value, sourceUnit);
   if (error) {
-    document.getElementById("result").innerText = error;
+    showResult(error, "error");
     return;
   }
 
@@ -203,84 +186,218 @@ async function convert() {
         body: JSON.stringify({
           value: value,
           unit: sourceUnit,
-          measurementType: type, // ✅ FIXED
+          measurementType: type,
         }),
       },
     );
 
     if (!res.ok) {
-      document.getElementById("result").innerText = "Conversion failed ❌";
+      showResult("Conversion failed", "error");
       return;
     }
 
     const data = await res.json();
-
-    document.getElementById("result").innerText =
-      `Converted: ${data.value} ${data.unit}`;
+    showResult(
+      `${value} ${sourceUnit} = ${data.value} ${data.unit}`,
+      "success",
+    );
 
     document.getElementById("value2").value = data.value;
-
     loadHistory();
-  } catch (err) {
-    console.error(err);
-    document.getElementById("result").innerText = "Server error ❌";
+  } catch {
+    showResult("Server error", "error");
   }
 }
 
-// =======================
-// 📜 HISTORY
-// =======================
+async function compare() {
+  const v1 = parseFloat(document.getElementById("value1").value);
+  const v2 = parseFloat(document.getElementById("value2").value);
+  const unit1 = document.getElementById("unit1").value;
+  const unit2 = document.getElementById("unit2").value;
+  const type = document.getElementById("measurementType").value;
 
-async function loadHistory(isLoggedIn) {
-  if (!isLoggedIn) {
-    document.getElementById("historyList").innerHTML =
-      "<li>🔒 Login to view history</li>";
+  if (!type) return;
+
+  const error = validateInput(v1, unit1);
+  if (error) {
+    showResult(error, "error");
     return;
   }
 
-  const res = await fetch(`${API_BASE}/history`, {
-    method: "GET",
-    credentials: "include",
-  });
+  try {
+    const res = await fetch(`${API_BASE}/quantity/compare`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thisQuantity: { value: v1, unit: unit1, measurementType: type },
+        thatQuantity: { value: v2, unit: unit2, measurementType: type },
+      }),
+    });
 
-  if (!res.ok) return;
+    const isEqual = await res.json();
 
-  const data = await res.json();
+    showResult(
+      isEqual
+        ? `Equal — both quantities are the same`
+        : `Not equal — the quantities differ`,
+      "success",
+    );
 
-  const historyList = document.getElementById("historyList");
-  historyList.innerHTML = "";
-
-  data.forEach((item) => {
-    const li = document.createElement("li");
-
-    li.innerText = item.error
-      ? `❌ ${item.errorMessage}`
-      : `${item.input} = ${item.result}`;
-
-    historyList.appendChild(li);
-  });
+    loadHistory();
+  } catch {
+    showResult("Server error", "error");
+  }
 }
 
-// =======================
-// 🚀 EVENTS (AUTO CONVERT)
-// =======================
+function guardArithmetic(operationName) {
+  const type = document.getElementById("measurementType").value;
 
-document
-  .getElementById("measurementType")
-  .addEventListener("change", (e) => populateUnits(e.target.value));
+  if (ARITHMETIC_BLOCKED_TYPES.includes(type)) {
+    showResult(
+      `${operationName} is not allowed for Temperature units`,
+      "error",
+    );
+    return false;
+  }
+
+  return true;
+}
+
+async function add() {
+  if (!guardArithmetic("Add")) return;
+
+  const v1 = parseFloat(document.getElementById("value1").value);
+  const v2 = parseFloat(document.getElementById("value2").value);
+  const unit1 = document.getElementById("unit1").value;
+  const unit2 = document.getElementById("unit2").value;
+  const type = document.getElementById("measurementType").value;
+
+  try {
+    const res = await fetch(`${API_BASE}/quantity/add`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thisQuantity: { value: v1, unit: unit1, measurementType: type },
+        thatQuantity: { value: v2, unit: unit2, measurementType: type },
+      }),
+    });
+
+    const data = await res.json();
+    showResult(`Result: ${data.value} ${data.unit}`, "success");
+    loadHistory();
+  } catch {
+    showResult("Server error", "error");
+  }
+}
+
+async function subtract() {
+  if (!guardArithmetic("Subtract")) return;
+
+  const v1 = parseFloat(document.getElementById("value1").value);
+  const v2 = parseFloat(document.getElementById("value2").value);
+  const unit1 = document.getElementById("unit1").value;
+  const unit2 = document.getElementById("unit2").value;
+  const type = document.getElementById("measurementType").value;
+
+  try {
+    const res = await fetch(`${API_BASE}/quantity/subtract`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thisQuantity: { value: v1, unit: unit1, measurementType: type },
+        thatQuantity: { value: v2, unit: unit2, measurementType: type },
+      }),
+    });
+
+    const data = await res.json();
+    showResult(`Result: ${data.value} ${data.unit}`, "success");
+    loadHistory();
+  } catch {
+    showResult("Server error", "error");
+  }
+}
+
+async function divide() {
+  if (!guardArithmetic("Divide")) return;
+
+  const v1 = parseFloat(document.getElementById("value1").value);
+  const v2 = parseFloat(document.getElementById("value2").value);
+  const unit1 = document.getElementById("unit1").value;
+  const unit2 = document.getElementById("unit2").value;
+  const type = document.getElementById("measurementType").value;
+
+  if (v2 === 0) {
+    showResult("Cannot divide by zero", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/quantity/divide`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        thisQuantity: { value: v1, unit: unit1, measurementType: type },
+        thatQuantity: { value: v2, unit: unit2, measurementType: type },
+      }),
+    });
+
+    const data = await res.json();
+    showResult(`Result: ${data}`, "success");
+    loadHistory();
+  } catch {
+    showResult("Server error", "error");
+  }
+}
+
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API_BASE}/history`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const list = document.getElementById("historyList");
+
+    if (!data.length) {
+      list.innerHTML = '<li class="empty-history">No history yet</li>';
+      return;
+    }
+
+    list.innerHTML = "";
+
+    data
+      .slice()
+      .reverse()
+      .forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "history-item" + (item.error ? " error-item" : "");
+
+        li.innerHTML = `
+          <span class="history-dot"></span>
+          <span>${
+            item.error
+              ? "❌ " + item.errorMessage
+              : item.input + " = " + item.result
+          }</span>
+        `;
+
+        list.appendChild(li);
+      });
+  } catch (e) {
+    console.error(e);
+  }
+}
 
 document.getElementById("value1").addEventListener("input", convert);
-
 document.getElementById("unit1").addEventListener("change", convert);
-
 document.getElementById("unit2").addEventListener("change", convert);
 
-// =======================
-// 🚀 INIT
-// =======================
-async function init() {
-  const isLoggedIn = await loadUser(); // check login
-  loadHistory(isLoggedIn); // pass status
-}
-
-init();
+loadUser();
+loadHistory();
