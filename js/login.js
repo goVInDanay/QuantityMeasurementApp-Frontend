@@ -15,7 +15,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
       credentials: "include",
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.text;
+    const data = await res.text();
     if (res.ok) {
       document.getElementById("message").innerText = "Login Successful!";
       window.location.href = "dashboard.html";
@@ -23,7 +23,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
       document.getElementById("message").innerText = data;
     }
   } catch (err) {
-    console.log(error);
+    console.log(err);
     document.getElementById("message").innerText = "Error logging in";
   }
 });
