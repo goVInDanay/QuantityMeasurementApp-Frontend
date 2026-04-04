@@ -1,0 +1,115 @@
+import type { QuantityDTO, CompareRequest, HistoryItem, User } from "../types";
+
+const API_BASE = "http://localhost:8080/api";
+
+const defaultOpts: RequestInit = {
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
+};
+
+export async function loginApi(
+  email: string,
+  password: string,
+): Promise<Response> {
+  return fetch(`${API_BASE}/auth/login`, {
+    ...defaultOpts,
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function registerApi(
+  name: string,
+  email: string,
+  password: string,
+  mobile: string,
+): Promise<Response> {
+  return fetch(`${API_BASE}/auth/register`, {
+    ...defaultOpts,
+    method: "POST",
+    body: JSON.stringify({ name, email, password, mobile }),
+  });
+}
+
+export async function logoutApi(): Promise<void> {
+  await fetch(`${API_BASE}/auth/logout`, {
+    ...defaultOpts,
+    method: "POST",
+  });
+}
+
+export const googleLoginUrl = `http://localhost:8080/oauth2/authorization/google`;
+
+export async function getUserProfile(): Promise<User | null> {
+  const res = await fetch(`${API_BASE}/user/profile`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+export async function convertApi(
+  quantity: QuantityDTO,
+  targetUnit: string,
+): Promise<QuantityDTO> {
+  const res = await fetch(
+    `${API_BASE}/quantity/convert?targetUnit=${targetUnit}`,
+    {
+      ...defaultOpts,
+      method: "POST",
+      body: JSON.stringify(quantity),
+    },
+  );
+  if (!res.ok) throw new Error("Conversion failed");
+  return res.json();
+}
+
+export async function addApi(req: CompareRequest): Promise<QuantityDTO> {
+  const res = await fetch(`${API_BASE}/quantity/add`, {
+    ...defaultOpts,
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error("Add failed");
+  return res.json();
+}
+
+export async function subtractApi(req: CompareRequest): Promise<QuantityDTO> {
+  const res = await fetch(`${API_BASE}/quantity/subtract`, {
+    ...defaultOpts,
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error("Subtract failed");
+  return res.json();
+}
+
+export async function divideApi(req: CompareRequest): Promise<number> {
+  const res = await fetch(`${API_BASE}/quantity/divide`, {
+    ...defaultOpts,
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error("Divide failed");
+  return res.json();
+}
+
+export async function compareApi(req: CompareRequest): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/quantity/compare`, {
+    ...defaultOpts,
+    method: "POST",
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error("Compare failed");
+  return res.json();
+}
+
+export async function getHistory(): Promise<HistoryItem[]> {
+  const res = await fetch(`${API_BASE}/history`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) return [];
+  return res.json();
+}

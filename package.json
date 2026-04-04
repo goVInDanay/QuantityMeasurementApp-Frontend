@@ -1,24 +1,23 @@
 {
-  "name": "quantitymeasurementapp-frontend",
+  "name": "quantity-measurement-app",
   "version": "1.0.0",
-  "description": "��#\u0000 \u0000Q\u0000u\u0000a\u0000n\u0000t\u0000i\u0000t\u0000y\u0000M\u0000e\u0000a\u0000s\u0000u\u0000r\u0000m\u0000e\u0000n\u0000t\u0000A\u0000p\u0000p\u0000-\u0000F\u0000r\u0000o\u0000n\u0000t\u0000e\u0000n\u0000d\u0000\r\u0000 \u0000",
-  "main": "index.js",
-  "scripts": {
-    "start": "json-server --watch db.json --port 3000"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/goVInDanay/QuantityMeasurmentApp-Frontend.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/goVInDanay/QuantityMeasurmentApp-Frontend/issues"
-  },
-  "homepage": "https://github.com/goVInDanay/QuantityMeasurmentApp-Frontend#readme",
+  "private": true,
   "dependencies": {
-    "json-server": "^1.0.0-beta.15"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.24.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/react-router-dom": "^5.3.3",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   }
 }
