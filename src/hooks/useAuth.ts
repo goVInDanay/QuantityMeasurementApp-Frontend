@@ -3,25 +3,24 @@ import { useNavigate } from "react-router-dom";
 import { getUserProfile } from "../api";
 import type { User } from "../types";
 
-export function useAuth(redirectIfUnauthenticated = false) {
+export function useAuth(requireAuth = false) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(requireAuth);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (!requireAuth) return;
+
     getUserProfile()
       .then((u) => {
-        if (!u && redirectIfUnauthenticated) {
-          navigate("/", { replace: true });
-        } else {
-          setUser(u);
-        }
+        if (!u && requireAuth) navigate("/", { replace: true });
+        else setUser(u);
       })
       .catch(() => {
-        if (redirectIfUnauthenticated) navigate("/", { replace: true });
+        if (requireAuth) navigate("/", { replace: true });
       })
       .finally(() => setLoading(false));
-  }, [navigate, redirectIfUnauthenticated]);
+  }, [requireAuth, navigate]);
 
   return { user, loading };
 }
