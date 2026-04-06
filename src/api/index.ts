@@ -1,6 +1,7 @@
 import type { QuantityDTO, CompareRequest, HistoryItem, User } from "../types";
 
-const API_BASE = "https://quantitymeasurmentapp-production.up.railway.app";
+const API_BASE =
+  "https://https://quantitymeasurmentapp-production.up.railway.app";
 
 const defaultOpts: RequestInit = {
   credentials: "include",
@@ -11,7 +12,7 @@ export async function loginApi(
   email: string,
   password: string,
 ): Promise<Response> {
-  return fetch(`${API_BASE}/auth/login`, {
+  return fetch(`${API_BASE}/api/auth/login`, {
     ...defaultOpts,
     method: "POST",
     body: JSON.stringify({ email, password }),
@@ -24,7 +25,7 @@ export async function registerApi(
   password: string,
   mobile: string,
 ): Promise<Response> {
-  return fetch(`${API_BASE}/auth/register`, {
+  return fetch(`${API_BASE}/api/auth/register`, {
     ...defaultOpts,
     method: "POST",
     body: JSON.stringify({ name, email, password, mobile }),
@@ -32,7 +33,7 @@ export async function registerApi(
 }
 
 export async function logoutApi(): Promise<void> {
-  await fetch(`${API_BASE}/auth/logout`, {
+  await fetch(`${API_BASE}/api/auth/logout`, {
     ...defaultOpts,
     method: "POST",
   });
@@ -54,7 +55,7 @@ export async function convertApi(
   targetUnit: string,
 ): Promise<QuantityDTO> {
   const res = await fetch(
-    `${API_BASE}/quantity/convert?targetUnit=${targetUnit}`,
+    `${API_BASE}/api/quantity/convert?targetUnit=${targetUnit}`,
     {
       ...defaultOpts,
       method: "POST",
@@ -66,7 +67,7 @@ export async function convertApi(
 }
 
 export async function addApi(req: CompareRequest): Promise<QuantityDTO> {
-  const res = await fetch(`${API_BASE}/quantity/add`, {
+  const res = await fetch(`${API_BASE}/api/quantity/add`, {
     ...defaultOpts,
     method: "POST",
     body: JSON.stringify(req),
@@ -76,7 +77,7 @@ export async function addApi(req: CompareRequest): Promise<QuantityDTO> {
 }
 
 export async function subtractApi(req: CompareRequest): Promise<QuantityDTO> {
-  const res = await fetch(`${API_BASE}/quantity/subtract`, {
+  const res = await fetch(`${API_BASE}/api/quantity/subtract`, {
     ...defaultOpts,
     method: "POST",
     body: JSON.stringify(req),
@@ -86,7 +87,7 @@ export async function subtractApi(req: CompareRequest): Promise<QuantityDTO> {
 }
 
 export async function divideApi(req: CompareRequest): Promise<number> {
-  const res = await fetch(`${API_BASE}/quantity/divide`, {
+  const res = await fetch(`${API_BASE}/api/quantity/divide`, {
     ...defaultOpts,
     method: "POST",
     body: JSON.stringify(req),
@@ -96,7 +97,7 @@ export async function divideApi(req: CompareRequest): Promise<number> {
 }
 
 export async function compareApi(req: CompareRequest): Promise<boolean> {
-  const res = await fetch(`${API_BASE}/quantity/compare`, {
+  const res = await fetch(`${API_BASE}/api/quantity/compare`, {
     ...defaultOpts,
     method: "POST",
     body: JSON.stringify(req),
@@ -106,7 +107,7 @@ export async function compareApi(req: CompareRequest): Promise<boolean> {
 }
 
 export async function getHistory(): Promise<HistoryItem[]> {
-  const res = await fetch(`${API_BASE}/history`, {
+  const res = await fetch(`${API_BASE}/api/history`, {
     method: "GET",
     credentials: "include",
   });
