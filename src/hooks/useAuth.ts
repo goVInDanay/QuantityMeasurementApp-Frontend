@@ -9,8 +9,6 @@ export function useAuth(requireAuth = false) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!requireAuth) return;
-
     getUserProfile()
       .then((u) => {
         if (!u && requireAuth) navigate("/", { replace: true });
