@@ -134,7 +134,7 @@ export default function AuthPage() {
             <button
               className="btn-google"
               onClick={() => {
-                window.location.href = googleLoginUrl;
+                window.location.assign(googleLoginUrl);
               }}
             >
               <svg width="18" height="18" viewBox="0 0 18 18">
