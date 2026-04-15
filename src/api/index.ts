@@ -30,7 +30,6 @@ export async function registerApi(
     body: JSON.stringify({ name, email, password, mobile }),
   });
 }
-}
 
 export async function logoutApi(): Promise<void> {
   await fetch(`${API_BASE}/api/auth/logout`, {
