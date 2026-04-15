@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { getHistory } from "../api";
 import Navbar from "../components/Navbar";
-import type { HistoryItem, User } from "../types";
+import type { HistoryItem } from "../types";
 
 export default function HistoryPage() {
   const { user, loading, setUser } = useAuth(true);
