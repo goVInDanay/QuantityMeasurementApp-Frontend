@@ -39,12 +39,15 @@ export default function AuthPage() {
     try {
       const res = await loginApi(loginEmail, loginPassword);
       const text = await res.text();
+      const data = await res.json();
       if (res.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
         setLoginMsg({
           text: "Login successful! Redirecting…",
           type: "success",
         });
-        setTimeout(() => navigate("/dashboard", { replace: true }), 1200);
+        setTimeout(() => navigate("/dashboard", { replace: true }), 4000);
       } else {
         setLoginMsg({ text: text || "Login failed", type: "error" });
       }
