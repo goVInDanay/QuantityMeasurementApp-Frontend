@@ -13,11 +13,11 @@ export async function loginApi(
 ): Promise<Response> {
   return fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
+    credentials: "include", // 🔥 FIX
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 }
-
 export async function registerApi(
   name: string,
   email: string,
@@ -26,6 +26,7 @@ export async function registerApi(
 ): Promise<Response> {
   return fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
+    credentials: "include", // 🔥 ADD THIS
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, password, mobile }),
   });
