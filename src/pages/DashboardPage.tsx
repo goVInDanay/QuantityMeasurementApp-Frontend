@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import Calculator from "../components/Calculator";
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth(false);
+  const { user, loading, setUser } = useAuth(false);
 
   const handleHistoryUpdate = useCallback(() => {}, []);
 
@@ -18,7 +18,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Navbar user={user} />
+      <Navbar user={user} setUser={setUser} />
       <div className="page">
         <Calculator onHistoryUpdate={handleHistoryUpdate} />
       </div>
