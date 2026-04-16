@@ -1,37 +1,42 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { getHistory } from "../api";
+import type { HistoryPage } from "../api";
 import Navbar from "../components/Navbar";
-import type { HistoryItem } from "../types";
+
+const PAGE_SIZE = 10;
 
 export default function HistoryPage() {
-  const { user, loading, setUser } = useAuth(true);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [fetching, setFetching] = useState(true);
+  const { user, loading } = useAuth(true);
+
+  const [historyPage, setHistoryPage] = useState<HistoryPage>({
+    items: [],
+    page: 0,
+    size: PAGE_SIZE,
+    totalElements: 0,
+    isLast: true,
+  });
+  const [currentPage, setCurrentPage] = useState(0);
+  const [fetching, setFetching] = useState(false);
   const [search, setSearch] = useState("");
 
-  // ✅ Fetch history safely
-  const refresh = useCallback(async () => {
+  const fetchPage = useCallback(async (page: number) => {
+    setFetching(true);
     try {
-      setFetching(true);
-      const items = await getHistory();
-      setHistory(items || []);
+      const result = await getHistory(page, PAGE_SIZE);
+      setHistoryPage(result);
+      setCurrentPage(page);
     } catch (e) {
       console.error("History fetch failed:", e);
-      setHistory([]);
     } finally {
       setFetching(false);
     }
   }, []);
 
-  // ✅ Only fetch AFTER user is loaded
   useEffect(() => {
-    if (user) {
-      refresh();
-    }
-  }, [user, refresh]);
+    if (user) fetchPage(0);
+  }, [user, fetchPage]);
 
-  // ✅ Loading screen
   if (loading) {
     return (
       <div className="page-loader">
@@ -40,48 +45,50 @@ export default function HistoryPage() {
     );
   }
 
-  // ✅ Unauthorized protection
   if (!user) {
     return <div>Please login</div>;
   }
 
-  // ✅ Format history text (FIXED CORE ISSUE)
   const formatText = (item: any) => {
     if (item.error) return item.errorMessage;
-
     const first = `${item.thisValue ?? ""} ${item.thisUnit ?? ""}`;
     const second =
       item.thatValue != null
         ? ` → ${item.thatValue} ${item.thatUnit ?? ""}`
         : "";
-
     return first + second;
   };
 
-  // ✅ Search fix
-  const displayed = [...history].reverse().filter((item) => {
+  const displayed = historyPage.items.filter((item) => {
     const q = search.toLowerCase();
     if (!q) return true;
-
-    const text = formatText(item);
-    return text.toLowerCase().includes(q);
+    return formatText(item).toLowerCase().includes(q);
   });
 
-  const successCount = history.filter((h) => !h.error).length;
-  const errorCount = history.filter((h) => h.error).length;
+  const successCount = historyPage.items.filter((h) => !h.error).length;
+  const errorCount = historyPage.items.filter((h) => h.error).length;
+  const totalPages = Math.ceil(historyPage.totalElements / PAGE_SIZE);
+  const showingFrom =
+    historyPage.totalElements === 0 ? 0 : currentPage * PAGE_SIZE + 1;
+  const showingTo = Math.min(
+    (currentPage + 1) * PAGE_SIZE,
+    historyPage.totalElements,
+  );
 
   return (
     <>
-      <Navbar user={user} setUser={setUser} />
-
+      <Navbar user={user} />
       <div className="history-page">
         <div className="history-page-header">
           <div>
             <h1 className="history-page-title">History</h1>
             <p className="history-page-subtitle">All your past calculations</p>
           </div>
-
-          <button className="btn-refresh" onClick={refresh} title="Refresh">
+          <button
+            className="btn-refresh"
+            onClick={() => fetchPage(currentPage)}
+            title="Refresh"
+          >
             <svg
               width="16"
               height="16"
@@ -99,23 +106,23 @@ export default function HistoryPage() {
           </button>
         </div>
 
+        {/* Stats — shows TOTAL across all pages */}
         <div className="history-stats">
           <div className="stat-card">
-            <span className="stat-number">{history.length}</span>
+            <span className="stat-number">{historyPage.totalElements}</span>
             <span className="stat-label">Total</span>
           </div>
-
           <div className="stat-card stat-success">
             <span className="stat-number">{successCount}</span>
-            <span className="stat-label">Successful</span>
+            <span className="stat-label">Successful (this page)</span>
           </div>
-
           <div className="stat-card stat-error">
             <span className="stat-number">{errorCount}</span>
-            <span className="stat-label">Errors</span>
+            <span className="stat-label">Errors (this page)</span>
           </div>
         </div>
 
+        {/* Search */}
         <div className="history-search-wrap">
           <svg
             width="16"
@@ -130,15 +137,13 @@ export default function HistoryPage() {
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-
           <input
             className="history-search"
             type="text"
-            placeholder="Search history…"
+            placeholder="Search this page…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-
           {search && (
             <button
               className="search-clear"
@@ -161,6 +166,7 @@ export default function HistoryPage() {
           )}
         </div>
 
+        {/* List */}
         <div className="card history-page-card">
           <div className="card-body" style={{ padding: "16px 24px" }}>
             {fetching ? (
@@ -176,20 +182,14 @@ export default function HistoryPage() {
                 {displayed.map((item, i) => (
                   <li
                     key={i}
-                    className={`history-full-item${
-                      item.error ? " error-item" : ""
-                    }`}
+                    className={`history-full-item${item.error ? " error-item" : ""}`}
                   >
                     <span className="history-dot" />
-
                     <span className="history-full-text">
                       {formatText(item)}
                     </span>
-
                     <span
-                      className={`history-badge ${
-                        item.error ? "badge-error" : "badge-success"
-                      }`}
+                      className={`history-badge ${item.error ? "badge-error" : "badge-success"}`}
                     >
                       {item.error ? "Error" : "OK"}
                     </span>
@@ -199,6 +199,54 @@ export default function HistoryPage() {
             )}
           </div>
         </div>
+
+        {/* Pagination */}
+        {historyPage.totalElements > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "16px",
+              flexWrap: "wrap",
+              gap: "8px",
+            }}
+          >
+            <span
+              style={{ fontSize: "13px", color: "var(--text-muted, #888)" }}
+            >
+              Showing {showingFrom}–{showingTo} of {historyPage.totalElements}
+            </span>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                className="btn-action"
+                onClick={() => fetchPage(currentPage - 1)}
+                disabled={currentPage === 0 || fetching}
+                style={{ padding: "6px 14px", fontSize: "13px" }}
+              >
+                ← Prev
+              </button>
+              <span
+                style={{
+                  padding: "6px 12px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
+                Page {currentPage + 1}
+                {totalPages > 0 ? ` / ${totalPages}` : ""}
+              </span>
+              <button
+                className="btn-action"
+                onClick={() => fetchPage(currentPage + 1)}
+                disabled={historyPage.isLast || fetching}
+                style={{ padding: "6px 14px", fontSize: "13px" }}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
