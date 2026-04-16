@@ -7,7 +7,7 @@ import Navbar from "../components/Navbar";
 const PAGE_SIZE = 10;
 
 export default function HistoryPage() {
-  const { user, loading } = useAuth(true);
+  const { user, loading, setUser } = useAuth(true);
 
   const [historyPage, setHistoryPage] = useState<HistoryPage>({
     items: [],
@@ -77,7 +77,7 @@ export default function HistoryPage() {
 
   return (
     <>
-      <Navbar user={user} />
+      <Navbar user={user} setUser={setUser} />
       <div className="history-page">
         <div className="history-page-header">
           <div>
