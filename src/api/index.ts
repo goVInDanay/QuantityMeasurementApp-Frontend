@@ -106,11 +106,36 @@ export async function compareApi(req: CompareRequest): Promise<boolean> {
   return res.json();
 }
 
-export async function getHistory(page = 0, size = 10): Promise<HistoryItem[]> {
+export interface HistoryPage {
+  items: HistoryItem[];
+  page: number;
+  size: number;
+  totalElements: number;
+  isLast: boolean;
+}
+export async function getHistory(page = 0, size = 10): Promise<HistoryPage> {
   const res = await fetch(`${API_BASE}/api/history?page=${page}&size=${size}`, {
     method: "GET",
     credentials: "include",
   });
-  if (!res.ok) return [];
-  return res.json();
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    return {
+      items: [],
+      page,
+      size,
+      totalElements: 0,
+      isLast: true,
+    };
+  }
+
+  return {
+    items: data.items ?? [],
+    page: data.page ?? page,
+    size: data.size ?? size,
+    totalElements: data.totalElements ?? 0,
+    isLast: Boolean(data.isLast), // 🔥 FIX
+  };
 }
