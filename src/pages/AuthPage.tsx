@@ -85,7 +85,6 @@ export default function AuthPage() {
             <br />
             Measurement App
           </div>
-          {/* Go to Dashboard without logging in */}
           <button className="btn-guest" onClick={() => navigate("/dashboard")}>
             Continue as Guest →
           </button>
